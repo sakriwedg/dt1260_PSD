@@ -13,6 +13,18 @@ import numpy as np
 
 DIGITAL_CHANNEL = 2
 
+# ------------------ PLOT SETUP ------------------
+MAX_POINTS = 200
+ch1_data = deque(maxlen=MAX_POINTS)
+ch2_data = deque(maxlen=MAX_POINTS)
+
+# define histogram bins (energy axis)
+ENERGY_MAX = 1024      # adjust to your ADC max
+NBINS = 1000           # number of bins for spectrum
+MIN_TIME_PLOT = 130    # max time axis for oscilloscope
+MAX_TIME_PLOT = 325    # max time axis for oscilloscope
+MAX_ADC_PLOT = 4096    # max ADC value for analog channel plot
+
 # Initialize SDK
 sdk = SciSDK()
 
@@ -147,19 +159,9 @@ if res != 0:
 else:
     print(" - Acquisition started successfully")
 
-# ------------------ PLOT SETUP ------------------
-MAX_POINTS = 200
-ch1_data = deque(maxlen=MAX_POINTS)
-ch2_data = deque(maxlen=MAX_POINTS)
 
-# define histogram bins (energy axis)
-ENERGY_MAX = 1024      # adjust to your ADC max
-NBINS = 1000           # number of bins for spectrum
-MIN_TIME_PLOT = 130    # max time axis for oscilloscope
-MAX_TIME_PLOT = 325    # max time axis for oscilloscope
-MAX_ADC_PLOT = 1024    # max ADC value for analog channel plot
 # ---------------- OSCILLOSCOPE FIGURE ----------------
-fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+fig, axs = plt.subplots(2, 2, figsize=(16, 12))
 
 ax_analog  = axs[0,0]
 ax_digital = axs[1,0]
@@ -215,8 +217,8 @@ def update_all(frame):
             word1 = buf_cus_local.data[i].row[1]
             word2 = buf_cus_local.data[i].row[2]
 
-            energy_ch1 = word1 & 0xFFFF
-            energy_ch2 = word2 & 0xFFFF
+            energy_ch1 = word2 & 0xFFFF
+            energy_ch2 = word1 & 0xFFFF
 
             ch1_data.append(energy_ch1)
             ch2_data.append(energy_ch2)
