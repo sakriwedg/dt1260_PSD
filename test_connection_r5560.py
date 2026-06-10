@@ -31,7 +31,9 @@ sdk = SciSDK()
 # Connect to device using your JSON
 print("\n")
 
-res = sdk.AddNewDevice("usb:60166", "dt1260", "RegisterFile.json", "board0")
+#res = sdk.AddNewDevice("usb:60166", "dt1260", "RegisterFile.json", "board0")
+
+res = sdk.AddNewDevice("10.128.0.51:8888", "R5560", "RegisterFile.json", "board0")
 if res != 0:
     print(" ! Failed to connect, code:", res)
     exit(1)
@@ -41,7 +43,7 @@ print(" - Device connected successfully!")
 # ---- Load register table ----
 print("\n --- Setting registers file:")
 
-table_file = "./table_1.txt"
+table_file = "./PsaParameters_2us_MIRACLES_20250912.txt"
 
 with open(table_file, "r") as f:
     lines = f.readlines()
@@ -66,13 +68,26 @@ for line in lines:
         print(f"Unknown type for {name}")
         continue
 
-    # Extract register short name (remove REGFILE_0_)
-    param_name = name.replace("REGFILE_0_", "")
+    # Extract register short name (there are 3 prefix cases : EMPTY, PCFG_ and FINE_OFS_)
+    if name.startswith("PCFG_"):
+        param_name = name.replace("PCFG_", "")
+        path = f"board0:/MMCComponents/PCFG.{param_name}"
+        print(f"Setting {param_name} at path {path} to value {value_int}")
+        err = sdk.SetParameterInteger(path, value_int)
+    elif name.startswith("FINE_OFS_"):
+        param_name = name.replace("FINE_OFS_", "")
+        path = f"board0:/MMCComponents/FINE_OFS.{param_name}"
+        print(f"Setting {param_name} at path {path} to value {value_int}")
+        err = sdk.SetParameterInteger(path, value_int)
+    else:
+        param_name = name
+        path = f"board0:/Registers/{param_name}"
+        print(f"Setting {param_name} at path {path} to value {value_int}")
+        err = sdk.SetRegister(path, value_int)
 
-    path = f"board0:/MMCComponents/REGFILE_0.{param_name}"
 
     # Set register
-    err = sdk.SetParameterInteger(path, value_int)
+    
 
     if err != 0:
         print(f"ERROR setting {param_name}, code {err}")
@@ -85,7 +100,7 @@ for line in lines:
         print(f"{param_name:15s} set to {read_val}")
     else:
         print(f"ERROR reading back {param_name}, code {err}")
-print("\ - All registers loaded.")
+print(" - All registers loaded.")
 
 
 # -------------------------------
