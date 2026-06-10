@@ -11,19 +11,27 @@ from collections import deque
 import ctypes
 import numpy as np
 
-DIGITAL_CHANNEL = 2
 
-# ------------------ PLOT SETUP ------------------
+
+# ------------------ CONFIGURATION ------------------
+OSCILLOSCOPE_TRIGGER_LEVEL = 5000
+
+# Digital pulses are asociated to filter output channels of A and B (3 and 4, respectively). 
+DIGITAL_CHANNEL = 3 # choose 3 for filter A, 4 for filter B
+
+# ------------------ PLOT SETUP ------------------      
 MAX_POINTS = 200
 ch1_data = deque(maxlen=MAX_POINTS)
 ch2_data = deque(maxlen=MAX_POINTS)
 
 # define histogram bins (energy axis)
 ENERGY_MAX = 1024      # adjust to your ADC max
-NBINS = 1000           # number of bins for spectrum
-MIN_TIME_PLOT = 130    # max time axis for oscilloscope
-MAX_TIME_PLOT = 325    # max time axis for oscilloscope
-MAX_ADC_PLOT = 4096    # max ADC value for analog channel plot
+NBINS = 100           # number of bins for spectrum
+MIN_TIME_PLOT = 0    # min time axis for oscilloscope
+MAX_TIME_PLOT = 2**10    # max time axis for oscilloscope
+MIN_ADC_PLOT = -2**10       # min ADC value for analog channel plot
+MAX_ADC_PLOT = 2**14    # max ADC value for analog channel plot
+
 
 # Initialize SDK
 sdk = SciSDK()
@@ -33,7 +41,7 @@ print("\n")
 
 #res = sdk.AddNewDevice("usb:60166", "dt1260", "RegisterFile.json", "board0")
 
-res = sdk.AddNewDevice("10.128.0.51:8888", "R5560", "RegisterFile.json", "board0")
+res = sdk.AddNewDevice("10.128.0.50:8888", "R5560", "RegisterFile.json", "board0")
 if res != 0:
     print(" ! Failed to connect, code:", res)
     exit(1)
@@ -43,7 +51,8 @@ print(" - Device connected successfully!")
 # ---- Load register table ----
 print("\n --- Setting registers file:")
 
-table_file = "./PsaParameters_2us_MIRACLES_20250912.txt"
+#table_file = "./PsaParameters_2us_MIRACLES_20250912.txt"
+table_file = "./registers_file_test_pulse.txt"
 
 with open(table_file, "r") as f:
     lines = f.readlines()
@@ -55,7 +64,12 @@ for line in lines:
     if line == "":
         continue
 
+    if len(line.split(";")) == 5:
+        # remove 4th column if exists (comment)
+        line = ";".join(line.split(";")[0:3] + line.split(";")[4:])
+
     name, reg_type, address, value = line.split(";")
+
 
     # Convert value based on type
     if reg_type == "Decimal":
@@ -72,25 +86,23 @@ for line in lines:
     if name.startswith("PCFG_"):
         param_name = name.replace("PCFG_", "")
         path = f"board0:/MMCComponents/PCFG.{param_name}"
-        print(f"Setting {param_name} at path {path} to value {value_int}")
+        #print(f"Setting {param_name} at path {path} to value {value_int}")
         err = sdk.SetParameterInteger(path, value_int)
     elif name.startswith("FINE_OFS_"):
         param_name = name.replace("FINE_OFS_", "")
         path = f"board0:/MMCComponents/FINE_OFS.{param_name}"
-        print(f"Setting {param_name} at path {path} to value {value_int}")
+        #print(f"Setting {param_name} at path {path} to value {value_int}")
         err = sdk.SetParameterInteger(path, value_int)
     else:
         param_name = name
         path = f"board0:/Registers/{param_name}"
-        print(f"Setting {param_name} at path {path} to value {value_int}")
+        #print(f"Setting {param_name} at path {path} to value {value_int}")
         err = sdk.SetRegister(path, value_int)
 
 
     # Set register
-    
-
     if err != 0:
-        print(f"ERROR setting {param_name}, code {err}")
+        #print(f"ERROR setting {param_name}, code {err}")
         continue
 
     # Read back to verify
@@ -110,7 +122,7 @@ print("\n --- Setting oscilloscope parameters:")
 decimator = 1
 
 res = sdk.SetParameterString("board0:/MMCComponents/Oscilloscope_0.data_processing","decode")
-res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.trigger_level", 1300)
+res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.trigger_level", OSCILLOSCOPE_TRIGGER_LEVEL)
 res = sdk.SetParameterString("board0:/MMCComponents/Oscilloscope_0.trigger_mode","analog")
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.trigger_channel", 0)
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.pretrigger", 150)
@@ -142,49 +154,17 @@ if res != 0:
 else:
     print(" - Number of channels:", val)
 
-# set Custom Packet parameters
-print("\n --- Setting custom packet parameters:")
-res = sdk.SetParameterString("board0:/MMCComponents/CP_0.thread", "false")
-res = sdk.SetParameterString("board0:/MMCComponents/CP_0.acq_mode", "non-blocking")
-res = sdk.SetParameterString("board0:/MMCComponents/CP_0.check_align_word", "check_align_word")
-res = sdk.SetParameterString("board0:/MMCComponents/CP_0.data_processing", "decode")
-res, check_align_word = sdk.GetParameterString("board0:/MMCComponents/CP_0.check_align_word")
-if res != 0:
-    print(" ! Failed to get check_align_word parameter for CP, code:", res)
-else:    
-    print(" - check_align_word parameter for CP:", check_align_word)
-res, data_processing = sdk.GetParameterString("board0:/MMCComponents/CP_0.data_processing")
-if res != 0:
-    print(" ! Failed to get data_processing parameter for CP, code:", res)
-else:
-    print(" - data_processing parameter for CP:", data_processing)
-
-# allocate buffer for custom packet
-res, buf_cus = sdk.AllocateBuffer("board0:/MMCComponents/CP_0", 16000)
-if res != 0:
-    print(" ! Failed to allocate buffer, code:", res)
-    exit(1)
-else:
-    print(" - Buffer allocated successfully")
-
-res = sdk.ExecuteCommand("board0:/MMCComponents/CP_0.start", "")
-if res != 0:
-    print(" ! Failed to start acquisition, code:", res)
-    exit(1)
-else:
-    print(" - Acquisition started successfully")
 
 
 # ---------------- OSCILLOSCOPE FIGURE ----------------
-fig, axs = plt.subplots(2, 2, figsize=(16, 12))
+fig, axs = plt.subplots(2, 1, figsize=(12, 12))
 
-ax_analog  = axs[0,0]
-ax_digital = axs[1,0]
-ax_spec    = axs[0,1]
-ax_ratio   = axs[1,1]
+ax_analog  = axs[0]
+ax_digital = axs[1]
+
 
 ax_analog.set_ylabel("ADC (analog)")
-ax_digital.set_ylabel(f"Digital tracks of CH_{DIGITAL_CHANNEL+1}")
+ax_digital.set_ylabel(f"Digital tracks of CH_{DIGITAL_CHANNEL}")
 ax_digital.set_xlabel("Time (samples)") 
 
 lines_analog = [] 
@@ -200,69 +180,13 @@ for i in range(4):
     lines_digital.append(line) 
 ax_digital.legend()
 ax_digital.grid(axis='x')
-ax_ratio.grid(axis='x')
 
-spec1 = []
-spec2 = []
-ratio_spec = []
 
-lineS1, = ax_spec.plot([], [], label="E1")
-lineS2, = ax_spec.plot([], [], label="E2")
-ax_spec.legend()
-ax_spec.grid(axis='x')
-
-lineR, = ax_ratio.plot([], [], label="E1/(E1+E2)")
-ax_ratio.legend()
-
-hist_bins = np.linspace(0, ENERGY_MAX, NBINS+1)  # edges of bins
-hist_ch1 = np.zeros(NBINS)    # cumulative spectrum
-hist_ch2 = np.zeros(NBINS)
-ratio_hist = np.zeros(NBINS)  # cumulative ratio histogram
 
 # ------------------ UPDATE FUNCTION ------------------
 def update_all(frame):
 
-    # =========================
-    # CUSTOM PACKET (ENERGY)
-    # =========================
-    res_cus, buf_cus_local = sdk.ReadData("board0:/MMCComponents/CP_0", buf_cus)
-    if res_cus == 0 and buf_cus_local.info.valid_data > 0:
 
-        for i in range(int(buf_cus_local.info.valid_data)):
-            word1 = buf_cus_local.data[i].row[1]
-            word2 = buf_cus_local.data[i].row[2]
-
-            energy_ch1 = word2 & 0xFFFF
-            energy_ch2 = word1 & 0xFFFF
-
-            ch1_data.append(energy_ch1)
-            ch2_data.append(energy_ch2)
-
-            # find bin index for each energy
-            bin_idx1 = np.searchsorted(hist_bins, energy_ch1, side='right') - 1
-            bin_idx2 = np.searchsorted(hist_bins, energy_ch2, side='right') - 1
-
-            if 0 <= bin_idx1 < NBINS:
-                hist_ch1[bin_idx1] += 1
-            if 0 <= bin_idx2 < NBINS:
-                hist_ch2[bin_idx2] += 1
-
-            # ratio CH1/(CH1+CH2)
-            r = energy_ch1 / (energy_ch1 + energy_ch2 + 1e-9)
-            ratio_bin_idx = np.searchsorted(hist_bins, r*ENERGY_MAX, side='right') - 1
-            if 0 <= ratio_bin_idx < NBINS:
-                ratio_hist[ratio_bin_idx] += 1
-
-            # ------------------ UPDATE SPECTRA PLOTS ------------------
-            bin_centers = (hist_bins[:-1] + hist_bins[1:]) / 2  # center of each bin
-            lineS1.set_data(bin_centers, hist_ch1)
-            lineS2.set_data(bin_centers, hist_ch2)
-            lineR.set_data(bin_centers, ratio_hist)
-
-            ax_spec.relim()
-            ax_spec.autoscale_view()
-            ax_ratio.relim()
-            ax_ratio.autoscale_view()
 
     # =========================
     # OSCILLOSCOPE
@@ -286,7 +210,7 @@ def update_all(frame):
         ax_analog.relim()
         ax_analog.autoscale_view()
         ax_analog.set_xlim(MIN_TIME_PLOT, MAX_TIME_PLOT)
-        ax_analog.set_ylim(0, MAX_ADC_PLOT)
+        ax_analog.set_ylim(MIN_ADC_PLOT, MAX_ADC_PLOT)
 
         # -------- DIGITAL --------
         samples = buf_osc_local.info.samples_digital
@@ -301,18 +225,18 @@ def update_all(frame):
 
             for i in range(samples):
 
-                index = DIGITAL_CHANNEL * tracks * samples + d * samples + i
+                index = (DIGITAL_CHANNEL - 1) * tracks * samples + d * samples + i
                 raw = buf_osc_local.digital[index] & 0xFF
                 bit = raw & 1
                 digital_wave.append(0.5*bit + (tracks - d -1 ))
 
             lines_digital[d].set_data(range(samples), digital_wave)
 
-    return (*lines_analog, *lines_digital, lineS1, lineS2, lineR)
+    return (*lines_analog, *lines_digital)
 
 # ------------------ START ANIMATION ------------------
 #update_all(0)
-ani = animation.FuncAnimation(fig, update_all, interval=50)
+ani = animation.FuncAnimation(fig, update_all, interval=5)
 plt.show()
 
 # -------------------------------
