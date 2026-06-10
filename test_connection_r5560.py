@@ -21,6 +21,8 @@ DIGITAL_CHANNEL = 2 # choose 2 for filter A, 3 for filter B
 
 TRIGGER_CHANNEL = 0 # choose 0 for channel A, 1 for channel B
 
+PRETRIGGER_SAMPLES = 150
+
 # ------------------ PLOT SETUP ------------------      
 MAX_POINTS = 200
 ch1_data = deque(maxlen=MAX_POINTS)
@@ -127,7 +129,7 @@ res = sdk.SetParameterString("board0:/MMCComponents/Oscilloscope_0.data_processi
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.trigger_level", OSCILLOSCOPE_TRIGGER_LEVEL)
 res = sdk.SetParameterString("board0:/MMCComponents/Oscilloscope_0.trigger_mode","analog")
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.trigger_channel", TRIGGER_CHANNEL)
-res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.pretrigger", 150)
+res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.pretrigger", PRETRIGGER_SAMPLES)
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.decimator", decimator)
 res = sdk.SetParameterString("board0:/MMCComponents/Oscilloscope_0.acq_mode", "blocking")
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.timeout", 3000)
