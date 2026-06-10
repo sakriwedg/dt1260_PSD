@@ -16,8 +16,10 @@ import numpy as np
 # ------------------ CONFIGURATION ------------------
 OSCILLOSCOPE_TRIGGER_LEVEL = 5000
 
-# Digital pulses are asociated to filter output channels of A and B (3 and 4, respectively). 
-DIGITAL_CHANNEL = 3 # choose 3 for filter A, 4 for filter B
+# Digital pulses are asociated to filter output channels of A and B (2 and 3, respectively). 
+DIGITAL_CHANNEL = 2 # choose 2 for filter A, 3 for filter B
+
+TRIGGER_CHANNEL = 0 # choose 0 for channel A, 1 for channel B
 
 # ------------------ PLOT SETUP ------------------      
 MAX_POINTS = 200
@@ -124,7 +126,7 @@ decimator = 1
 res = sdk.SetParameterString("board0:/MMCComponents/Oscilloscope_0.data_processing","decode")
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.trigger_level", OSCILLOSCOPE_TRIGGER_LEVEL)
 res = sdk.SetParameterString("board0:/MMCComponents/Oscilloscope_0.trigger_mode","analog")
-res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.trigger_channel", 0)
+res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.trigger_channel", TRIGGER_CHANNEL)
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.pretrigger", 150)
 res = sdk.SetParameterInteger("board0:/MMCComponents/Oscilloscope_0.decimator", decimator)
 res = sdk.SetParameterString("board0:/MMCComponents/Oscilloscope_0.acq_mode", "blocking")
@@ -163,13 +165,13 @@ ax_analog  = axs[0]
 ax_digital = axs[1]
 
 
-ax_analog.set_ylabel("ADC (analog)")
-ax_digital.set_ylabel(f"Digital tracks of CH_{DIGITAL_CHANNEL}")
+ax_analog.set_ylabel("ADC")
+ax_digital.set_ylabel(f"Digital pulses of CH{DIGITAL_CHANNEL}")
 ax_digital.set_xlabel("Time (samples)") 
 
 lines_analog = [] 
 for i in range(4): 
-    line, = ax_analog.plot([], [], label=f"CH{i+1}") 
+    line, = ax_analog.plot([], [], label=f"CH{i}") 
     lines_analog.append(line) 
 ax_analog.legend() 
 ax_analog.grid()
@@ -225,7 +227,7 @@ def update_all(frame):
 
             for i in range(samples):
 
-                index = (DIGITAL_CHANNEL - 1) * tracks * samples + d * samples + i
+                index = DIGITAL_CHANNEL * tracks * samples + d * samples + i
                 raw = buf_osc_local.digital[index] & 0xFF
                 bit = raw & 1
                 digital_wave.append(0.5*bit + (tracks - d -1 ))
