@@ -674,15 +674,15 @@ def get_value(rows, key_search, value_search, key_return):
 
 def scope_parameters_update():    
     # update a parameter value in the oscilloscope menu based on the registers values present in the register menu
-    Trigger_Thresh.value       = get_value(table.rows,'name', 'PCFG_THRS','value')
-    Trigger_Source.value       = (Trigger_Source.options[int(get_value(table.rows,'name','PCFG_TRG_SOURCE','value'))])
-    Trigger_Mode.value         = (Trigger_Mode.options[int(get_value(table.rows,'name','PCFG_TRG_MODE','value'))])
-    Trigger_hysteresis.value   = get_value(table.rows,'name', 'PCFG_HIST','value')
-    Trigger_hold_off.value     = get_value(table.rows,'name', 'PCFG_TRG_HOLD','value')
-    Trigger_output_width.value = get_value(table.rows,'name', 'PCFG_TRG_W','value')
-    Gate_window.value          = get_value(table.rows,'name', 'PCFG_GATE_W','value')
-    polarity.value             = (polarity.options[int(get_value(table.rows,'name','PCFG_POL','value'))])
-    offset.value               = get_value(table.rows,'name', 'PCFG_RAWOFS','value')
+    Trigger_Thresh.value=get_value(table.rows,'name', 'PCFG_THRS','value')
+    Trigger_Source.value=(Trigger_Source.options[int(get_value(table.rows,'name', 'PCFG_TRG_SOURCE','value'))])
+    Trigger_Mode.value=(Trigger_Mode.options[int(get_value(table.rows,'name', 'PCFG_TRG_MODE','value'))])
+    Trigger_hysteresis.value=get_value(table.rows,'name', 'PCFG_HIST','value')
+    Trigger_hold_off.value=get_value(table.rows,'name', 'PCFG_TRG_HOLD','value')
+    Trigger_output_width.value=get_value(table.rows,'name', 'PCFG_TRG_W','value')
+    Gate_window.value =get_value(table.rows,'name', 'PCFG_GATE_W','value')
+    polarity.value=(polarity.options[int(get_value(table.rows,'name','PCFG_POL','value'))])
+    offset.value=get_value(table.rows,'name', 'PCFG_RAWOFS','value')
     # OFFSETS MENU TO BE MODIFIED SINCE OFFSETS SEEM TOP BE PER CHANNEL IN THIS FIRMWARE
     Probe_Selection.value=(Probe_Selection.options[int(get_value(table.rows,'name','PCFG_PRB_SEL','value'))])
     tau.value = (np.round((1E6*(2 * pi) / ((math.log((( int(get_value(table.rows,'name', 'PCFG_C11','value'),16) - 0.5 )/ 16384)))/(-2.71072)*ADC_SAMPLING_FREQ)),1))
@@ -711,8 +711,8 @@ def set_value(rows, key_search, value_search, key_to_modify, new_value):
 
 def registers_table_update():
     set_value(table.rows,'name', 'PCFG_THRS','value',Trigger_Thresh.value)
-    set_value(table.rows,'name', 'PCFG_TRG_SOURCE','value',Trigger_Source.options.index(Trigger_Source.value))
-    set_value(table.rows,'name', 'PCFG_TRG_MODE','value',Trigger_Mode.options.index(Trigger_Mode.value))
+    set_value(table.rows,'name',  'PCFG_TRG_SOURCE','value',Trigger_Source.options.index(Trigger_Source.value))
+    set_value(table.rows,'name',  'PCFG_TRG_MODE','value',Trigger_Mode.options.index(Trigger_Mode.value))
     set_value(table.rows,'name', 'PCFG_HIST','value',Trigger_hysteresis.value)
     set_value(table.rows,'name', 'PCFG_TRG_HOLD','value',Trigger_hold_off.value)
     set_value(table.rows,'name', 'PCFG_TRG_W','value',Trigger_output_width.value)

@@ -8,11 +8,11 @@ PCFG_RAWOFS;Decimal;1;0
 PCFG_POL;Decimal;2;1
 PCFG_TRG_SOURCE;Decimal;3;0
 PCFG_TRG_MODE;Decimal;4;2
-PCFG_THRS;Decimal;5;1000
+PCFG_THRS;Decimal;5;9000
 PCFG_HIST;Decimal;6;500
 PCFG_TRG_HOLD;Decimal;7;25
-PCFG_TRG_W;Decimal;8;10
-PCFG_GATE_W;Decimal;9;100
+PCFG_TRG_W;Decimal;8;100
+PCFG_GATE_W;Decimal;9;300
 PCFG_FLT_CFG;Hexadecimal;A;1f66
 PCFG_C11;Hexadecimal;B;3bc9
 PCFG_C12;Hexadecimal;C;7bb6

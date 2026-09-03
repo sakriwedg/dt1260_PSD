@@ -15,7 +15,7 @@ import numpy as np
 
 # ------------------ CONFIGURATION ------------------
 #OSCILLOSCOPE_TRIGGER_LEVEL = 5000
-OSCILLOSCOPE_TRIGGER_LEVEL = 2000
+OSCILLOSCOPE_TRIGGER_LEVEL = 1800
 # Digital pulses are asociated to filter output channels of A and B (2 and 3, respectively). 
 DIGITAL_CHANNEL = 2 # choose 2 for filter A, 3 for filter B
 TRIGGER_CHANNEL = 0 # choose 0 for channel A, 1 for channel B
@@ -199,6 +199,30 @@ for i in range(NUMBER_OF_RECORDS):
             csv_file.write(f"{energy_ch1},{energy_ch2}\n")
 csv_file.close()
 print(f"\nCustom packet data recorded in {OUTPUT_CSV}")
+
+res, pars = sdk.GetAllParameters(
+    "board0:/MMCComponents/CP_0"
+)
+
+print("res =", res)
+print(pars)
+
+for cp in ["CP_0"]:
+    path = f"board0:/MMCComponents/{cp}"
+
+    print("\n---", cp)
+
+    sdk.ExecuteCommand(path + ".start", "")
+    import time
+    time.sleep(2)
+
+    res, v = sdk.GetRegister(path + "/READ_STATUS")
+    print("READ_STATUS =", v)
+
+    res, v = sdk.GetRegister(path + "/READ_VALID_WORDS")
+    print("VALID_WORDS =", v)
+
+
 
 # ---------------- OSCILLOSCOPE FIGURE ----------------
 fig, axs = plt.subplots(2, 1, figsize=(12, 12))
